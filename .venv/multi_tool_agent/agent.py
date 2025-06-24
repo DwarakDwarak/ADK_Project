@@ -4,13 +4,14 @@ from google.adk.agents import Agent
 import os
 import re
 from datetime import datetime
-
+from dotenv import load_dotenv
+load_dotenv()
 # ------------------ File Paths ------------------
 base_dir = os.path.dirname(__file__)
 credential = os.path.join(base_dir, 'service.json')
 
 # ------------------ Google Sheets Setup ------------------
-SPREADSHEET_ID = "1HTc47DLLkCoGcG0c_TR8aeBLU34NTAOea4o2lYQCwgY"
+SPREADSHEET_ID = os.getenv("SPREADSHEET_ID")
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 creds = Credentials.from_service_account_file(credential, scopes=SCOPES)
 sheet_service = build("sheets", "v4", credentials=creds)
