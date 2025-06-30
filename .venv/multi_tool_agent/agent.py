@@ -59,48 +59,65 @@ def log_daily_update(name: str, entry: dict) -> dict:
 def parse_natural_language(text: str) -> dict:
     entry = {}
 
-    # --- Fix: Clean up suffixes like 1st, 2nd, 3rd, 4th ---
     def clean_ordinal_suffix(date_str):
         return re.sub(r'(\d+)(st|nd|rd|th)', r'\1', date_str)
 
-    # --- Fix: Date ---
-    date_match = re.search(r"Today's date is ([\w\d\s]+)", text)
+    # --- Date ---
+    date_match = re.search(r"(?:Today's date is|Date[:\-]?)\s*([\d]{1,2}(?:st|nd|rd|th)?\s+\w+\s+\d{4})", text, re.IGNORECASE)
     if date_match:
         raw_date = clean_ordinal_suffix(date_match.group(1).strip())
         try:
             entry["Date"] = datetime.strptime(raw_date, "%d %B %Y").strftime("%Y-%m-%d")
-            entry["Date update on"] = entry["Date"]
-        except:
-            entry["Date"] = entry["Date update on"] = ""
+        except ValueError:
+            entry["Date"] = ""
+    else:
+        entry["Date"] = ""
+    entry["Date update on"] = entry["Date"]
 
-    # Project Name
-    proj_match = re.search(r"worked on (.*?) project", text)
+    # --- Project Name ---
+    proj_match = re.search(r"(?:worked on|Project[:\-]?)\s*(.*?)(?:\s+project)?[\.,\n]", text, re.IGNORECASE)
     entry["Project Name"] = proj_match.group(1).strip() + " project" if proj_match else ""
 
-    # Leave/WFH
-    entry["Leave/WFH"] = "WFH" if "from home" in text else "Office"
+    # --- Leave/WFH ---
+    if re.search(r"(from home|wfh)", text, re.IGNORECASE):
+        entry["Leave/WFH"] = "WFH"
+    elif re.search(r"(office|onsite)", text, re.IGNORECASE):
+        entry["Leave/WFH"] = "Office"
+    else:
+        entry["Leave/WFH"] = ""
 
-    # Tasks Completed Today
-    task_match = re.search(r"completed (.*?)(?:,|\.|;)", text)
+    # --- Tasks Completed Today ---
+    task_match = re.search(r"(?:completed|Tasks Done[:\-]?)\s+(.*?)(?:[\.,\n]|Hours|Blockers|Tomorrow)", text, re.IGNORECASE)
     entry["Tasks Completed Today"] = task_match.group(1).strip() if task_match else ""
 
-    # Hours Worked
-    hours_match = re.search(r"(\d+)\s+hours\s+worked", text)
+    # --- Hours Worked ---
+    hours_match = re.search(r"(\d+)\s+(?:hrs|hours)\s+worked", text, re.IGNORECASE)
+    if not hours_match:
+        hours_match = re.search(r"Hours[:\-]?\s*(\d+)", text, re.IGNORECASE)
     entry["Hours Worked"] = hours_match.group(1) if hours_match else ""
 
-    # Blockers
-    blockers_match = re.search(r"(no blockers|blockers.*?)\.", text)
-    entry["Blockers / Issues"] = blockers_match.group(1).strip() if blockers_match else ""
+    # --- Blockers / Issues ---
+    blockers_match = re.search(r"(no blockers|Blockers[:\-]?\s*.*?)(?:[\n\.]|Tomorrow|Note|$)", text, re.IGNORECASE)
+    if blockers_match:
+        blockers_text = blockers_match.group(1).strip()
+        # Normalize phrasing like "Blockers: none" → "no blockers"
+        if re.search(r"\bnone\b|\bno\b", blockers_text.lower()):
+            entry["Blockers / Issues"] = "no blockers"
+        else:
+            entry["Blockers / Issues"] = blockers_text.replace("Blockers:", "").strip()
+    else:
+        entry["Blockers / Issues"] = ""
 
-    # Tomorrow Plan
-    tomorrow_match = re.search(r"tomorrow.*?(?:will|to)\s+(.*?)(?:\.|,|$)", text)
+    # --- Planned Tasks for Tomorrow ---
+    tomorrow_match = re.search(r"(?:tomorrow.*?(?:will|to)\s+|Tomorrow[:\-]?)\s*(.*?)(?:[\n\.]|Note|$)", text, re.IGNORECASE)
     entry["Planned Tasks for Tomorrow"] = tomorrow_match.group(1).strip() if tomorrow_match else ""
 
-    # --- Fix: Notes/Remarks at end ---
-    note_match = re.search(r"Notes?:\s*(.+)", text, re.IGNORECASE)
+    # --- Notes/Remarks ---
+    note_match = re.search(r"(?:Note[s]?:|Remarks[:\-]?)\s*(.+)", text, re.IGNORECASE)
     entry["Notes/Remarks"] = note_match.group(1).strip() if note_match else ""
 
     return entry
+
 
 
 # ------------------ Function: Handle Natural Language Update ------------------
@@ -137,3 +154,7 @@ root_agent = Agent(
     ),
     tools=[log_daily_update, handle_natural_language_update],
 )
+
+
+
+# Update for Kevin: worked on Daily Task Logger project from home, completed Google Sheets logging integration, 2 hours worked, no blockers, tomorrow will work on email feature. Today's date is 30th June 2025. Note: All modules integrated successfully.
