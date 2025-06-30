@@ -1,0 +1,24 @@
+# Use an official Python runtime as a parent image
+FROM python:3.13-slim-bookworm
+
+# Set the working directory in the container
+WORKDIR /.venv
+
+# Copy the requirements file into the container at /app
+COPY requirements.txt .
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+
+# Copy the rest of the application code into the container
+COPY . .
+
+# Define environment variables (if any)
+# ENV NAME=World
+ ENV GOOGLE_GENAI_USE_VERTEXAI=FALSE
+ENV GOOGLE_API_KEY=AIzaSyAWjaYe3_S5djdQuhCbr7Nv0EEJCd1CN-0
+# Run agent.py when the container launches
+EXPOSE 8000
+CMD ["adk", "web", "/.venv","--host", "0.0.0.0"]
