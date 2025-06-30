@@ -20,5 +20,6 @@ COPY . .
  ENV GOOGLE_GENAI_USE_VERTEXAI=FALSE
 ENV GOOGLE_API_KEY=AIzaSyAWjaYe3_S5djdQuhCbr7Nv0EEJCd1CN-0
 # Run agent.py when the container launches
-EXPOSE 8000
-CMD ["adk", "web", "/.venv","--host", "0.0.0.0"]
+EXPOSE 8080
+
+CMD ["sh", "-c", "adk web /.venv --host 0.0.0.0 --port ${PORT:-8080}"]
