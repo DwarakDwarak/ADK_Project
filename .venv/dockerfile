@@ -1,25 +1,19 @@
-# Use an official Python runtime as a parent image
-FROM python:3.13-slim-bookworm
+FROM python:3.13-slim
 
-# Set the working directory in the container
-WORKDIR /.venv
+WORKDIR /tracker_adk_sample
 
-# Copy the requirements file into the container at /app
 COPY requirements.txt .
 
-# Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir --force-reinstall google-adk
 
-
-# Copy the rest of the application code into the container
-COPY . .
-
-# Define environment variables (if any)
-# ENV NAME=World
- ENV GOOGLE_GENAI_USE_VERTEXAI=FALSE
+ENV PATH="/root/.local/bin:$PATH"
+ENV GOOGLE_GENAI_USE_VERTEXAI=FALSE
 ENV GOOGLE_API_KEY=AIzaSyAWjaYe3_S5djdQuhCbr7Nv0EEJCd1CN-0
-# Run agent.py when the container launches
-EXPOSE 8080
 
-CMD ["sh", "-c", "adk web /.venv --host 0.0.0.0 --port ${PORT:-8080}"]
+# Let Cloud Run know we use this port
+EXPOSE 8000
+
+# Use shell to expand $PORT
+CMD ["adk", "web", "/tracker_adk_sample","--host", "0.0.0.0"]
