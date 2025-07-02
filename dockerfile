@@ -12,6 +12,7 @@ ENV PATH="/root/.local/bin:$PATH"
 ENV GOOGLE_GENAI_USE_VERTEXAI=FALSE
 ENV GOOGLE_API_KEY=AIzaSyAWjaYe3_S5djdQuhCbr7Nv0EEJCd1CN-0
 
+COPY . .
 # Let Cloud Run know we use this port
 EXPOSE 8000
 
